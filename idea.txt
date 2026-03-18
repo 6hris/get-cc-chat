@@ -1,0 +1,14 @@
+I'd like to make a tool for easily sharing a claude code (or codex or any of the
+terminal based coding agents) session with others. Something similar to how
+with the llm chat interface (like chatgpt.com), you can share a chat and it will
+generate a link for the chat that anyone can click and read through the history
+between that person and the llm. 
+
+Two things we need to flesh out:
+1. how to get the info from a terminal chat session. Is there some way to get this 
+directly from the terminal tools like claude code? Else, is there a way we can
+extract the output from a whole terminal window, then display that on a url well
+formatted?
+
+2. how are we going to share the chats / how to generate unique urls for each chat?
+is there a solution where we can do minimal hosting ourselves? 

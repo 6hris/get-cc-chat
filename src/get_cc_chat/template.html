@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ session.project | basename }} &mdash; Claude Code Session</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.6;
+  color: #1a1a1a;
+  background: #f7f7f8;
+}
+
+.container {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.header {
+  text-align: center;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid #e5e5e5;
+  margin-bottom: 2rem;
+}
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+.header .date {
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 0.25rem;
+}
+.header .badge {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.2rem 0.6rem;
+  background: #f0f0f5;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.message {
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+}
+.message--user {
+  background: #ecf7ec;
+}
+.message--assistant {
+  background: #fff;
+  border: 1px solid #e5e5e5;
+}
+.message-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #888;
+  margin-bottom: 0.5rem;
+}
+.message--user .message-text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.message--assistant .message-text p {
+  margin: 0.75em 0;
+}
+.message--assistant .message-text p:first-child { margin-top: 0; }
+.message--assistant .message-text p:last-child { margin-bottom: 0; }
+.message--assistant .message-text code {
+  background: #f0f0f5;
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.9em;
+}
+.message--assistant .message-text pre code {
+  background: none;
+  padding: 0;
+}
+.message--assistant .message-text ul,
+.message--assistant .message-text ol {
+  margin: 0.75em 0;
+  padding-left: 1.5em;
+}
+.message--assistant .message-text table {
+  border-collapse: collapse;
+  margin: 0.75em 0;
+  width: 100%;
+}
+.message--assistant .message-text th,
+.message--assistant .message-text td {
+  border: 1px solid #e0e0e0;
+  padding: 0.4rem 0.75rem;
+  text-align: left;
+}
+.message--assistant .message-text th {
+  background: #f7f7f8;
+  font-weight: 600;
+}
+.codehilite {
+  border-radius: 6px;
+  padding: 0.75rem;
+  overflow-x: auto;
+  margin: 0.75em 0;
+}
+.codehilite pre {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.tool-call {
+  margin-top: 0.75rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.tool-call summary {
+  padding: 0.5rem 0.75rem;
+  background: #fafafa;
+  cursor: pointer;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.85rem;
+  color: #555;
+}
+.tool-call summary:hover {
+  background: #f0f0f0;
+}
+.tool-result {
+  padding: 0;
+  background: #1e1e1e;
+  overflow-x: auto;
+}
+.tool-result pre {
+  margin: 0;
+  padding: 0.75rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: #d4d4d4;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.tool-result--error {
+  border-left: 3px solid #e53e3e;
+}
+.tool-result--truncated pre {
+  max-height: 300px;
+  overflow: hidden;
+}
+.show-more-btn {
+  display: block;
+  width: 100%;
+  padding: 0.4rem;
+  background: #2d2d2d;
+  color: #a0a0a0;
+  border: none;
+  border-top: 1px solid #3d3d3d;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+.show-more-btn:hover {
+  color: #fff;
+}
+{{ pygments_css }}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>{{ session.project | basename }}</h1>
+    <div class="date">{{ session.started_at[:10] }}</div>
+    <div class="badge">Exported from Claude Code</div>
+  </div>
+
+  {% for msg in session.messages %}
+  <div class="message message--{{ msg.role }}">
+    <div class="message-label">{{ msg.role }}</div>
+    {% if msg.text %}
+    <div class="message-text">{% if msg.role == 'assistant' %}{{ msg.text | md }}{% else %}{{ msg.text }}{% endif %}</div>
+    {% endif %}
+    {% for tc in msg.tool_calls %}
+    <details class="tool-call">
+      <summary>{{ tool_summary(tc) }}</summary>
+      {% if tc.result is not none %}
+      <div class="tool-result{% if tc.is_error %} tool-result--error{% endif %}{% if tc.result | line_count > RESULT_LINE_THRESHOLD %} tool-result--truncated{% endif %}">
+        <pre>{{ tc.result }}</pre>
+      </div>
+      {% if tc.result | line_count > RESULT_LINE_THRESHOLD %}
+      <button class="show-more-btn" onclick="var r=this.previousElementSibling;r.classList.toggle('tool-result--truncated');this.textContent=r.classList.contains('tool-result--truncated')?'Show more':'Show less';">Show more</button>
+      {% endif %}
+      {% endif %}
+    </details>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+</body>
+</html>
