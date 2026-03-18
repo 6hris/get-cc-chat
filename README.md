@@ -35,5 +35,5 @@ pip install -e .
 pytest tests/ -v
 ```
 
-## Claude Code Session used for this project
+## CC Session used for this project (and example of tool)
 https://gisthost.github.io/?90c933f6b71b1f6a3dc1c435bf8b672c
