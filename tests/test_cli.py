@@ -156,6 +156,30 @@ class TestNoToolsMode:
         assert "Here are the files" in html
 
 
+# --- --gist ---
+
+
+class TestGistMode:
+    @patch("get_cc_chat.cli.create_gist")
+    @patch("get_cc_chat.cli.check_gh_cli")
+    def test_gist_uploads_and_prints_url(self, mock_check, mock_create, fake_claude_home, capsys):
+        mock_check.return_value = True
+        mock_create.return_value = "https://gisthost.github.io/?abc123"
+        with patch.object(Path, "home", return_value=fake_claude_home):
+            main(["--gist"])
+        out = capsys.readouterr().out
+        assert "gisthost.github.io/?abc123" in out
+
+    @patch("get_cc_chat.cli.check_gh_cli")
+    def test_gist_errors_without_gh(self, mock_check, fake_claude_home, capsys):
+        mock_check.return_value = False
+        with patch.object(Path, "home", return_value=fake_claude_home):
+            with pytest.raises(SystemExit):
+                main(["--gist"])
+        err = capsys.readouterr().err
+        assert "gh" in err.lower()
+
+
 # --- --project filter ---
 
 

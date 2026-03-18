@@ -6,3 +6,4 @@ build/
 .pytest_cache/
 chat-*.html
 uv.lock
+.claude

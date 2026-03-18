@@ -4,6 +4,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from .gist import check_gh_cli, create_gist
 from .renderer import render_html
 from .session import find_session_jsonl, list_sessions, parse_jsonl
 
@@ -80,6 +81,16 @@ def main(argv=None):
     output_path = args.output or f"chat-{session_id[:8]}.html"
     Path(output_path).write_text(html)
     print(f"Wrote {output_path}")
+
+    if args.gist:
+        if not check_gh_cli():
+            print(
+                "Error: gh CLI not found. Install it from https://cli.github.com/",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        gist_url = create_gist(output_path)
+        print(gist_url)
 
 
 def _handle_list(history_path, project=None):
